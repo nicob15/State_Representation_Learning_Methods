@@ -50,7 +50,7 @@ parser.add_argument('--method', type=str, default='AE',
                     help='Model type.')
 parser.add_argument('--training-dataset', type=str, default='pendulum-train.pkl',
                     help='Training dataset.')
-parser.add_argument('--testing-dataset', type=str, default='pendulum_test.pkl',
+parser.add_argument('--testing-dataset', type=str, default='pendulum-test.pkl',
                     help='Testing dataset.')
 
 parser.add_argument('--log-interval', type=int, default=10,
@@ -97,7 +97,7 @@ cuda = args.cuda
 
 
 def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
-         testing_dataset='pendulum_test.pkl'):
+         testing_dataset='pendulum-test.pkl'):
 
     directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -216,7 +216,7 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
                 if epoch % log_interval == 0:
                     torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
 
-    torch.save(model.state_dict(), save_pth_dir + '/model_'+ date_string+'.pth')
+    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string+'.pth')
 
     if plotting:
         model.eval()

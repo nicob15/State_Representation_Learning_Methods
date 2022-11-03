@@ -16,11 +16,10 @@ This review addresses the problem of learning abstract representations of the me
 * matplotlib
 * sklearn
 
-### Implemented Models
-
-We implemented the most relevant state representation learning methods discussed in the review and combination of these. Below the complete list:
-* linear autoencoder (linearAE)
-* autoencoder (AE)
+## Implemented Models
+We implemented the most relevant state representation learning methods discussed in the review and several combinations of them. Below the complete list:
+* linear autoencoder (linearAE) without non-linearities
+* autoencoder (AE) 
 * variational autoencoder (VAE)
 * deterministic latent forward model (detFW)
 * stochastic latent forward model (stochFW)
@@ -28,19 +27,20 @@ We implemented the most relevant state representation learning methods discussed
 * inverse model (detIN) for continuous action spaces
 * add mode
 
-### Test Case
+## Test Case
 Learning pendulum state representation from:
 * RGB images (84x84x6)
 * RGB images with static distractor in each observation (background)
 * RGB images with dynamics distractor (the distractor randomly changes position in each observation)
 
+We provide the training and testing dataset used to generate the results presented in the paper [Link](https://surfdrive.surf.nl/files/index.php/s/P0FUd74HSZN9Wcs). The datasets were collected by applying a random policy to the Pendulum-v1 from Gym ([Link](https://www.gymlibrary.dev/environments/classic_control/pendulum/))
 
 ### Train the model
 ```bash
 python main.py 
 ```
 
-### Cite
+## Cite
 If you use this code in your own work, please cite our papers:
 ```
 @article{botteghi2022unsupervised,
