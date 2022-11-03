@@ -1,1 +1,53 @@
-# State_Representation_Learning_Methods
+# Unsupervised Representation Learning in Deep Reinforcement Learning: A Review
+
+Code accompanying the paper:
+
+**Unsupervised Representation Learning in Deep Reinforcement Learning: A Review**\
+Nicolò Botteghi, Mannes Poel, Christoph Brune,
+The can be found at: [Link](https://arxiv.org/pdf/2208.14226.pdf).
+
+**Abstract:** 
+This review addresses the problem of learning abstract representations of the measurement data in the context of Deep Reinforcement Learning (DRL). While the data are often ambiguous, high-dimensional, and complex to interpret, many dynamical systems can be effectively described by a low-dimensional set of state variables. Discovering these state variables from the data is a crucial aspect for improving the data efficiency, robustness and generalization of DRL methods, tackling the \textit{curse of dimensionality}, and bringing interpretability and insights into black-box DRL. This review provides a comprehensive and complete overview of unsupervised representation learning in DRL by describing the main Deep Learning tools used for learning representations of the world, providing a systematic view of the method and principles, summarizing applications, benchmarks and evaluation strategies, and discussing open challenges and future directions.
+
+## Requirements
+
+* python 3.8
+* pytorch (version 1.12 + CUDA 11.6)
+* matplotlib
+* sklearn
+
+### Implemented Models
+
+We implemented the most relevant state representation learning methods discussed in the review and combination of these. Below the complete list:
+* linear autoencoder (linearAE)
+* autoencoder (AE)
+* variational autoencoder (VAE)
+* deterministic latent forward model (detFW)
+* stochastic latent forward model (stochFW)
+* reward model (detRW)
+* inverse model (detIN) for continuous action spaces
+* add mode
+
+### Test Case
+Learning pendulum state representation from:
+* RGB images (84x84x6)
+* RGB images with static distractor in each observation (background)
+* RGB images with dynamics distractor (the distractor randomly changes position in each observation)
+
+
+### Train the model
+```bash
+python main.py 
+```
+
+### Cite
+If you use this code in your own work, please cite our papers:
+```
+@article{botteghi2022unsupervised,
+  title={Unsupervised Representation Learning in Deep Reinforcement Learning: A Review},
+  author={Botteghi, Nicol{\`o} and Poel, Mannes and Brune, Christoph},
+  journal={arXiv preprint arXiv:2208.14226},
+  year={2022}
+}
+
+```
