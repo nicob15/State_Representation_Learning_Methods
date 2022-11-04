@@ -43,6 +43,9 @@ class ReplayBuffer:
                     done=self.done_buf[idxs],
                     ep_start=self.ep_start_buf[idxs],
                     obs3=self.next_obs_buf[idxs2],
+                    obs4=self.obs_buf[idxs2],
+                    acts2=self.acts_buf[idxs2],
+                    rews2=self.rews_buf[idxs2],
                     states=self.state_buf[idxs],
                     next_states=self.state_buf[idxs+1])
 

@@ -4,12 +4,17 @@ import gc
 import os
 import numpy as np
 import argparse
+import utils
 from datetime import datetime
 from utils import load_pickle, add_gaussian_noise
 from replay_buffer import ReplayBuffer
 from plotter import plot_representation
-from methods import LinearAE, AE, VAE, DeterministicFW, StochasticFW, DeterministicRW, DeterministicIN
-from trainer import train_AE, train_VAE, train_detFW, train_RW, train_IN
+from methods import LinearAE, AE, VAE, DeterministicFW, StochasticFW, DeterministicRW, DeterministicIN, \
+                    AE_DeterministicFW, AE_DeterministicRW, AE_DeterministicIN, DeterministicFWRW, DeterministicFWRWIN, \
+                    EncoderCL, EncPriors, DeterministicMDPH, EncDeepBisimulation
+from trainer import train_AE, train_VAE, train_detFW, train_stochFW, train_detRW, train_detIN, train_AE_detFW, \
+                    train_AE_detRW, train_AE_detIN, train_detFWRW, train_detFWRWIN, train_encCL, train_encPriors, \
+                    train_detMDPH, train_EncDeepBisim
 
 parser = argparse.ArgumentParser()
 
@@ -46,7 +51,7 @@ parser.add_argument('--hidden-dim', type=int, default=256,
                     help='Number of hidden units in MLPs.')
 
 
-parser.add_argument('--method', type=str, default='AE',
+parser.add_argument('--method', type=str, default='encBisim',
                     help='Model type.')
 parser.add_argument('--training-dataset', type=str, default='pendulum-train.pkl',
                     help='Training dataset.')
@@ -107,8 +112,6 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
     data = load_pickle(folder)
     data_test = load_pickle(folder_test)
 
-    # Options are: linearAE, AE, VAE, detFW, detFW+CL stochFW, detRW, detIN, ...
-
     if method == 'linearAE':
         model = LinearAE(z_dim=latent_dim, h_dim=h_dim)
 
@@ -127,15 +130,47 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
     if method == 'stochFW':
         model = StochasticFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
+    if method == 'stochFW+CL':
+        model = StochasticFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
+
     if method == 'detRW':
         model = DeterministicRW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
 
     if method == 'detIN':
         model = DeterministicIN(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, bounded_act='True', scale=2.0)
 
+    if method == 'encCL':
+        model = EncoderCL(z_dim=latent_dim, h_dim=h_dim)
+
+    if method == 'encPriors':
+        model = EncPriors(z_dim=latent_dim, h_dim=h_dim)
+
+    if method == 'detMDPH':
+        model = DeterministicMDPH(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
+
+    if method == 'encBisim':
+        model = EncDeepBisimulation(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
+
+    if method == 'AEdetFW':
+        model = AE_DeterministicFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
+
+    if method == 'AEdetRW':
+        model = AE_DeterministicRW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
+
+    if method == 'AEdetIN':
+        model = AE_DeterministicIN(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
+
+    if method == 'detFWRW':
+        model = DeterministicFWRW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
+
+    if method == 'detFWRWIN':
+        model = DeterministicFWRWIN(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
+
     if torch.cuda.is_available() and cuda:
         model = model.cuda()
         gc.collect()
+
+    model.apply(utils.weights_init)
 
     # Use the adam optimizer
     optimizer = torch.optim.Adam([
@@ -204,15 +239,81 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
                 if epoch % log_interval == 0:
                     torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
 
+            if method == 'stochFW':
+                train_stochFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader, model=model,
+                         optimizer=optimizer, contrastive_learning=False)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
+            if method == 'stochFW+CL':
+                train_stochFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader, model=model,
+                              optimizer=optimizer, contrastive_learning=True)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
             if method == 'detRW':
-                train_RW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                train_detRW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
                             model=model, optimizer=optimizer)
                 if epoch % log_interval == 0:
                     torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
 
             if method == 'detIN':
-                train_IN(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                train_detIN(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
                             model=model, optimizer=optimizer)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
+            if method == 'encPriors':
+                train_encPriors(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                model=model, optimizer=optimizer)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
+            if method == 'detMDPH':
+                train_detMDPH(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                              model=model, optimizer=optimizer)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
+            if method == 'encBisim':
+                train_EncDeepBisim(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                   model=model, optimizer=optimizer)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
+            if method == 'AEdetFW':
+                train_AE_detFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                               model=model, optimizer=optimizer)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
+            if method == 'AEdetRW':
+                train_AE_detRW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                               model=model, optimizer=optimizer)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
+            if method == 'AEdetIN':
+                train_AE_detIN(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                               model=model, optimizer=optimizer)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
+            if method == 'detFWRW':
+                train_detFWRW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                              model=model, optimizer=optimizer)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
+            if method == 'detFWRWIN':
+                train_detFWRWIN(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                model=model, optimizer=optimizer)
+                if epoch % log_interval == 0:
+                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+
+            if method == 'encCL':
+                train_encCL(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                              model=model, optimizer=optimizer)
                 if epoch % log_interval == 0:
                     torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
 
@@ -226,5 +327,17 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
 
 if __name__ == "__main__":
 
-    main(method=method, noise_level=noise_level, training_dataset=training_dataset, testing_dataset=testing_dataset)
+    if method == 'all':
+        # Options are: linearAE, AE, VAE, detFW, detFW+CL stochFW, stochFW+CL, detRW, detIN, encCL, encPriors, detMDPH,
+        # encBisim, AEdetFW, AEdetRW, AEdetIN, detFWRW, detFWRWIN, encCL (explaination on github [ADD LINK])
+
+        method = ['linearAE', 'AE', 'VAE', 'detFW', 'detFW+CL', 'stochFW', 'stochFW+CL', 'detRW', 'detIN', 'encPriors',
+                  'detMDPH', 'encBisim', 'AEdetFW', 'AEdetRW', 'AEdetIN', 'detFWRW', 'detFWRWIN', 'encCL']
+
+        for i in range(len(method)):
+            main(method=method[i], noise_level=noise_level, training_dataset=training_dataset,
+                 testing_dataset=testing_dataset)
+    else:
+        main(method=method, noise_level=noise_level, training_dataset=training_dataset, testing_dataset=testing_dataset)
+
     print('Finished Training the Representation Model!')

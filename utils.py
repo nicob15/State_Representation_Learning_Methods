@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+from torch import nn
+
 try:
     import cPickle as pickle
 except:
@@ -26,3 +28,8 @@ def add_gaussian_noise(data, noise_level=0.0, clip=False, clip_level=(0, 1)):
         return (data + np.random.normal(0.0, noise_level, size=data.shape)).clip(clip_level[0], clip_level[1])
     else:
         return data + np.random.normal(0.0, noise_level, size=data.shape)
+
+def weights_init(m):
+    if isinstance(m, nn.Conv2d):
+        nn.init.xavier_uniform_(m.weight)
+        nn.init.zeros_(m.bias)

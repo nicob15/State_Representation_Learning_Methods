@@ -116,7 +116,7 @@ class DeterministicDecoder(nn.Module):
         z = F.elu(self.deconv2(z))
         z = self.batch4(z)
         z = F.elu(self.deconv3(z))
-        x = F.sigmoid(self.deconv4(z))
+        x = self.deconv4(z)
         return x
 
     def forward(self, x):
@@ -210,8 +210,11 @@ class DeterministicForwardModel(nn.Module):
         return z_next
 
 class StochasticForwardModel(nn.Module):
-    def __init__(self, z_dim=20, h_dim=256, a_dim=1):
+    def __init__(self, z_dim=20, h_dim=256, a_dim=1,  max_sigma=1e1, min_sigma=1e-4):
         super(StochasticForwardModel, self).__init__()
+
+        self.max_sigma = max_sigma
+        self.min_sigma = min_sigma
 
         self.fc = nn.Linear(z_dim + a_dim, h_dim)
         self.fc1 = nn.Linear(h_dim, h_dim)
@@ -228,7 +231,8 @@ class StochasticForwardModel(nn.Module):
         za = F.elu(self.fc(za))
         za = F.elu(self.fc1(za))
         mu = self.fc2(za)
-        std = F.relu(self.fc3(za)) + 1e-4
+        std = F.sigmoid(self.fc3(za))
+        std = self.min_sigma + (self.max_sigma - self.min_sigma) * std
         z_next = self.sampling(mu, std)
         return mu, std, z_next
 
@@ -281,3 +285,27 @@ class DeterministicInverseModel(nn.Module):
         else:
             a = self.fc2(zz)
         return a
+
+class DeterministicActionEncoder(nn.Module):
+    def __init__(self, z_dim=20, h_dim=256, a_dim=1):
+        super(DeterministicActionEncoder, self).__init__()
+
+        self.fc = nn.Linear(z_dim + a_dim, h_dim)
+        self.fc1 = nn.Linear(h_dim, h_dim)
+        self.fc2 = nn.Linear(h_dim, z_dim)
+
+    def forward(self, z, a):
+        za = torch.cat([z, a], dim=1)
+        za = F.elu(self.fc(za))
+        za = F.elu(self.fc1(za))
+        a_bar = self.fc2(za)
+        return a_bar
+
+
+class DeterministicForwardModelMDPH(nn.Module):
+    def __init__(self, z_dim=20, h_dim=256, a_dim=1):
+        super(DeterministicForwardModelMDPH, self).__init__()
+
+    def forward(self, z, a_bar):
+        z_next = z + a_bar
+        return z_next

@@ -22,10 +22,20 @@ We implemented the most relevant state representation learning methods discussed
 * autoencoder (AE) 
 * variational autoencoder (VAE)
 * deterministic latent forward model (detFW)
+* deterministic latent forward model with contrastive hinge loss (detFW+CL)
 * stochastic latent forward model (stochFW)
-* reward model (detRW)
-* inverse model (detIN) for continuous action spaces
-* add mode
+* stochastic latent forward model with contrastive hinge loss (stochFW+CL)
+* latent reward model (detRW)
+* latent inverse model (detIN) for continuous action spaces
+* deterministic encoder trained with robotics priors fro continuous action spaces (encPriors)
+* action-equivariance MDP homomorphism (detMDPH)
+* deep bisimulation metric (encBisim)
+* autoencoder with deterministic latent forward model (AEdetFW)
+* autoencoder with latent reward model (AEdetRW)
+* autoencoder with latent inverse model (AEdetIN)
+* deterministic latent forward, and reward model (FWRW)
+* deterministic latent forward, reward, and inverse model (FWRWIN)
+* deterministic encoder trained with hinge loss (encCL)
 
 ## Test Case
 Learning pendulum state representation from:
@@ -33,7 +43,7 @@ Learning pendulum state representation from:
 * RGB images with static distractor in each observation (background)
 * RGB images with dynamics distractor (the distractor randomly changes position in each observation)
 
-We provide the training and testing dataset used to generate the results presented in the paper [Link](https://surfdrive.surf.nl/files/index.php/s/P0FUd74HSZN9Wcs). The datasets were collected by applying a random policy to the Pendulum-v1 from Gym ([Link](https://www.gymlibrary.dev/environments/classic_control/pendulum/))
+We provide the training and testing dataset used to generate the results presented in the paper (dowload here [Link] and place in folder 'data')(https://surfdrive.surf.nl/files/index.php/s/P0FUd74HSZN9Wcs). The datasets were collected by applying a random policy to the Pendulum-v1 from Gym ([Link](https://www.gymlibrary.dev/environments/classic_control/pendulum/))
 
 ### Train the model
 ```bash
