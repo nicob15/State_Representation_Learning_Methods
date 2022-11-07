@@ -6,6 +6,8 @@ Code accompanying the paper:
 Nicolò Botteghi, Mannes Poel, Christoph Brune,
 The can be found at: [Link](https://arxiv.org/pdf/2208.14226.pdf).
 
+![alt text](Figure_1.png)
+
 **Abstract:** 
 This review addresses the problem of learning abstract representations of the measurement data in the context of Deep Reinforcement Learning (DRL). While the data are often ambiguous, high-dimensional, and complex to interpret, many dynamical systems can be effectively described by a low-dimensional set of state variables. Discovering these state variables from the data is a crucial aspect for improving the data efficiency, robustness and generalization of DRL methods, tackling the \textit{curse of dimensionality}, and bringing interpretability and insights into black-box DRL. This review provides a comprehensive and complete overview of unsupervised representation learning in DRL by describing the main Deep Learning tools used for learning representations of the world, providing a systematic view of the method and principles, summarizing applications, benchmarks and evaluation strategies, and discussing open challenges and future directions.
 
