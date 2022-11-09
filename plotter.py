@@ -123,6 +123,10 @@ def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, P
     if method == 'detFWRWIN':
         z, _, _, _, _ = model(o, a, o_next)
 
+    if method == 'encCL':
+        o_neg = torch.from_numpy(data['obs3']).permute(0, 3, 1, 2).cuda()
+        z, _ = model(o, o_neg)
+
     z = z.cpu().numpy()
     r = r.cpu().numpy()
     if PCA:

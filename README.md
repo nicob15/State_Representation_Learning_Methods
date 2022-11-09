@@ -20,7 +20,7 @@ This review addresses the problem of learning abstract representations of the me
 
 ## Implemented Models
 We implemented the most relevant state representation learning methods discussed in the review and several combinations of them. Below the complete list:
-* linear autoencoder (linearAE) without non-linearities
+* linear autoencoder (linearAE)
 * autoencoder (AE) 
 * variational autoencoder (VAE)
 * deterministic latent forward model (detFW)

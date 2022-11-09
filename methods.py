@@ -260,7 +260,7 @@ class EncDeepBisimulation(nn.Module):
         z1_target = self.encoder(o1_next)
         z2 = self.encoder(o2)
         z2_target = self.encoder(o2_next)
-        mu1, std1, z1_next = self.fw_model(z1.detach(), a1)
-        mu2, std2, z2_next = self.fw_model(z2.detach(), a2)
-        r = self.rw_model(z1_target.detach())
+        mu1, std1, z1_next = self.fw_model(z1, a1)
+        mu2, std2, z2_next = self.fw_model(z2, a2)
+        r = self.rw_model(z1_next)
         return z1, z1_target, z1_next, mu1, std1, z2, z2_target, z2_next, mu2, std2, r

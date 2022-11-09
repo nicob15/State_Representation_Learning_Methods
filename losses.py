@@ -61,9 +61,12 @@ def repeatability(s1, s2, sd1, sd2, a1, a2, beta=10.0):
     return torch.mean(loss)
 
 def bisimulation_loss(z1, z2, r1, r2, mu1, std1, mu2, std2):
-    loss = torch.square(torch.norm(z1 - z2, p=1, dim=1) - torch.norm(r1 - r2, p=1, dim=1) - Wasserstein2(mu1, std1, mu2, std2))
+    a = torch.nn.functional.smooth_l1_loss(z1, z2, reduction='none').mean(dim=1).view(-1, 1)
+    b = torch.nn.functional.smooth_l1_loss(r1, r2, reduction='none')
+    c = Wasserstein2(mu1, std1, mu2, std2).mean(dim=1).view(-1, 1)
+    loss = torch.square(a - b - c)
     return torch.mean(loss)
 
-def Wasserstein2(mu1, std1, mu2, std2, gamma=0.5):
-    loss = gamma * torch.norm(mu1 - mu2, p=2, dim=1)**2 + torch.norm(std1 - std2, p=2, dim=1)**2
+def Wasserstein2(mu1, std1, mu2, std2, gamma=0.99):
+    loss = gamma * torch.sqrt((mu1 - mu2).pow(2) + (std1 - std2).pow(2)) #(torch.norm(mu1 - mu2, p=2, dim=1) + torch.norm(std1 - std2, p=2, dim=1))
     return loss

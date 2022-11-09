@@ -527,7 +527,7 @@ def train_detMDPH(epoch, batch_size, nr_data, train_loader, model, optimizer):
     print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
     print('====> Epoch: {} Average hinge loss: {:.4f}'.format(epoch, train_loss_hinge / nr_data))
 
-def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimizer, optimizer_fwrw):
 
     model.train()
 
@@ -535,7 +535,6 @@ def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimize
     train_loss_bis = 0
     train_loss_fw = 0
     train_loss_rw = 0
-    #train_loss_hinge = 0
 
     for i in range(int(nr_data/batch_size)):
         data = train_loader.sample_batch(batch_size)
@@ -547,11 +546,12 @@ def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimize
         o2 = torch.from_numpy(data['obs4']).permute(0, 3, 1, 2).cuda()
         a2 = torch.from_numpy(data['acts2']).cuda()
         o2_next = torch.from_numpy(data['obs3']).permute(0, 3, 1, 2).cuda()
-        r2 = torch.from_numpy(data['rews']).view(-1, 1).cuda()
+        r2 = torch.from_numpy(data['rews2']).view(-1, 1).cuda()
 
         optimizer.zero_grad()
+        optimizer_fwrw.zero_grad()
 
-        z1, z1_target, z1_next, mu1, std1, z2, z2_target, _, mu2, std2, r_pred = model(o1, a1, o1_next, o2, a2, o2_next)
+        z1, z1_target, z1_next, mu1, std1, z2, _, _, mu2, std2, r_pred = model(o1, a1, o1_next, o2, a2, o2_next)
 
         loss_bis = bisimulation_loss(z1, z2, r1, r2, mu1.detach(), std1.detach(), mu2.detach(), std2.detach())
 
@@ -559,9 +559,7 @@ def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimize
 
         loss_rw = mse_loss(r1, r_pred)
 
-        #loss_hinge = contrastive_loss(z1, z2)
-
-        loss_t = loss_bis + loss_fw + loss_rw #+ loss_hinge
+        loss_t = 0.5 * loss_bis + loss_fw + loss_rw
 
         loss_t.backward()
 
@@ -569,12 +567,11 @@ def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimize
         train_loss_bis += loss_bis.item()
         train_loss_fw += loss_fw.item()
         train_loss_rw += loss_rw.item()
-        #train_loss_hinge += loss_hinge.item()
 
         optimizer.step()
+        optimizer_fwrw.step()
 
     print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
     print('====> Epoch: {} Average bisimulation loss: {:.4f}'.format(epoch, train_loss_bis / nr_data))
     print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
     print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
-    #print('====> Epoch: {} Average hinge loss: {:.4f}'.format(epoch, train_loss_hinge / nr_data))

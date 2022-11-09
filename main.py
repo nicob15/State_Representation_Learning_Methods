@@ -115,67 +115,140 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
     if method == 'linearAE':
         model = LinearAE(z_dim=latent_dim, h_dim=h_dim)
 
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
     if method == 'AE':
         model = AE(z_dim=latent_dim, h_dim=h_dim)
+
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
 
     if method == 'VAE':
         model = VAE(z_dim=latent_dim, h_dim=h_dim)
 
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
     if method == 'detFW':
         model = DeterministicFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
+
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
 
     if method == 'detFW+CL':
         model = DeterministicFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
     if method == 'stochFW':
         model = StochasticFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
+
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
 
     if method == 'stochFW+CL':
         model = StochasticFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
     if method == 'detRW':
         model = DeterministicRW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
+
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
 
     if method == 'detIN':
         model = DeterministicIN(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, bounded_act='True', scale=2.0)
 
-    if method == 'encCL':
-        model = EncoderCL(z_dim=latent_dim, h_dim=h_dim)
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
 
     if method == 'encPriors':
         model = EncPriors(z_dim=latent_dim, h_dim=h_dim)
 
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
     if method == 'detMDPH':
         model = DeterministicMDPH(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
+
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
 
     if method == 'encBisim':
         model = EncDeepBisimulation(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
+        optimizer_fwrw = torch.optim.Adam([
+            {'params': model.fw_model.parameters(),
+             'params': model.rw_model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
     if method == 'AEdetFW':
         model = AE_DeterministicFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
+
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
 
     if method == 'AEdetRW':
         model = AE_DeterministicRW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
 
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
     if method == 'AEdetIN':
         model = AE_DeterministicIN(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
+
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
 
     if method == 'detFWRW':
         model = DeterministicFWRW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
 
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
     if method == 'detFWRWIN':
         model = DeterministicFWRWIN(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
+
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
+    if method == 'encCL':
+        model = EncoderCL(z_dim=latent_dim, h_dim=h_dim)
+
+        optimizer = torch.optim.Adam([
+            {'params': model.parameters()},
+        ], lr=lr, weight_decay=1e-3)
+
 
     if torch.cuda.is_available() and cuda:
         model = model.cuda()
         gc.collect()
 
     model.apply(utils.weights_init)
-
-    # Use the adam optimizer
-    optimizer = torch.optim.Adam([
-        {'params': model.parameters()},
-        ], lr=lr, weight_decay=1e-3)
 
     nr_samples = 0
     train_loader = ReplayBuffer(obs_dim=(obs_dim_1, obs_dim_2, 6), act_dim=act_dim, size=len(data), state_dim=state_dim)
@@ -277,7 +350,7 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
 
             if method == 'encBisim':
                 train_EncDeepBisim(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                                   model=model, optimizer=optimizer)
+                                   model=model, optimizer=optimizer, optimizer_fwrw=optimizer_fwrw)
                 if epoch % log_interval == 0:
                     torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
 
@@ -317,13 +390,14 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
                 if epoch % log_interval == 0:
                     torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
 
+
     torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string+'.pth')
 
     if plotting:
         model.eval()
         with torch.no_grad():
             plot_representation(model=model, method=method, nr_samples_plot=1000, test_loader=test_loader,
-                                save_dir=save_pth_dir, PCA='False')
+                                save_dir=save_pth_dir, PCA='True')
 
 if __name__ == "__main__":
 
@@ -331,7 +405,8 @@ if __name__ == "__main__":
         # Options are: linearAE, AE, VAE, detFW, detFW+CL stochFW, stochFW+CL, detRW, detIN, encCL, encPriors, detMDPH,
         # encBisim, AEdetFW, AEdetRW, AEdetIN, detFWRW, detFWRWIN, encCL (explaination on github [ADD LINK])
 
-        method = ['linearAE', 'AE', 'VAE', 'detFW', 'detFW+CL', 'stochFW', 'stochFW+CL', 'detRW', 'detIN', 'encPriors',
+        #'linearAE', 'AE', 'VAE',
+        method = ['detFW', 'detFW+CL', 'stochFW', 'stochFW+CL', 'detRW', 'detIN', 'encPriors',
                   'detMDPH', 'encBisim', 'AEdetFW', 'AEdetRW', 'AEdetIN', 'detFWRW', 'detFWRWIN', 'encCL']
 
         for i in range(len(method)):
