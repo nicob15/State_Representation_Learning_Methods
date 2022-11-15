@@ -42,13 +42,22 @@ def plot_reconstruction(obs, obs_rec, save_dir, nr_samples=24, obs_dim_1=84, obs
     save_image(tensor=obs.view(nr_samples, 3, obs_dim_1, obs_dim_2), fp=save_dir1 + '.png')
     save_image(tensor=obs_rec.view(nr_samples, 3, obs_dim_1, obs_dim_2), fp=save_dir2 + '.png')
 
+def plot_observation(obs, save_dir, nr_samples=24, obs_dim_1=84, obs_dim_2=84):
 
-def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, PCA='True'):
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    save_dir1 = save_dir + 'obs'
+
+    obs = obs[:nr_samples, 3:6, :, :]
+
+    save_image(tensor=obs.view(nr_samples, 3, obs_dim_1, obs_dim_2), fp=save_dir1 + '.png')
+
+def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, PCA=True, distractor=True, fixed=False):
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    data = test_loader.sample_batch(batch_size=nr_samples_plot)
+    data = test_loader.sample_batch(batch_size=nr_samples_plot, distractor=distractor, fixed=fixed)
     o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
     a = torch.from_numpy(data['acts']).cuda()
     r = torch.from_numpy(data['rews']).view(-1,1).cuda()
@@ -69,21 +78,27 @@ def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, P
 
     if method == 'detFW':
         z, _, _ = model(o, a, o_next)
+        plot_observation(o, save_dir)
 
     if method == 'detFW+CL':
         z, _, _ = model(o, a, o_next)
+        plot_observation(o, save_dir)
 
     if method == 'stochFW':
         z, _, _, _, _ = model(o, a, o_next)
+        plot_observation(o, save_dir)
 
     if method == 'stochFW+CL':
         z, _, _, _, _ = model(o, a, o_next)
+        plot_observation(o, save_dir)
 
     if method == 'detRW':
         z, _ = model(o, a, o_next)
+        plot_observation(o, save_dir)
 
     if method == 'detIN':
         z, _ = model(o, o_next)
+        plot_observation(o, save_dir)
 
     if method == 'encPriors':
         o1 = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
@@ -91,6 +106,7 @@ def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, P
         o2 = torch.from_numpy(data['obs4']).permute(0, 3, 1, 2).cuda()
         o2_next = torch.from_numpy(data['obs3']).permute(0, 3, 1, 2).cuda()
         z, _, _, _, _, _ = model(o1, o1_next, o2, o2_next)
+        plot_observation(o, save_dir)
 
     if method == 'encBisim':
         o1 = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
@@ -100,10 +116,12 @@ def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, P
         a2 = torch.from_numpy(data['acts']).cuda()
         o2_next = torch.from_numpy(data['obs3']).permute(0, 3, 1, 2).cuda()
         z, _, _, _, _, _, _, _, _, _, _ = model(o1, a1, o1_next, o2, a2, o2_next)
+        plot_observation(o, save_dir)
 
     if method == 'detMDPH':
         o_neg = torch.from_numpy(data['obs3']).permute(0, 3, 1, 2).cuda()
         z, _, _, _, _, _ = model(o, a, o_next, o_neg)
+        plot_observation(o, save_dir)
 
     if method == 'AEdetFW':
         z, o_rec, _, _ = model(o, a, o_next)
@@ -119,13 +137,16 @@ def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, P
 
     if method == 'detFWRW':
         z, _, _, _ = model(o, a, o_next)
+        plot_observation(o, save_dir)
 
     if method == 'detFWRWIN':
         z, _, _, _, _ = model(o, a, o_next)
+        plot_observation(o, save_dir)
 
     if method == 'encCL':
         o_neg = torch.from_numpy(data['obs3']).permute(0, 3, 1, 2).cuda()
         z, _ = model(o, o_neg)
+        plot_observation(o, save_dir)
 
     z = z.cpu().numpy()
     r = r.cpu().numpy()

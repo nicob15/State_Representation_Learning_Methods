@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
 
 # for 84x84 inputs
 OUT_DIM = {2: 39, 4: 35, 6: 31}
@@ -170,6 +169,7 @@ class StochasticDecoder(nn.Module):
         self.batch3 = nn.BatchNorm2d(32)
         self.deconv3 = nn.ConvTranspose2d(32, 32, (3, 3), stride=(1, 1))
         self.deconv4 = nn.ConvTranspose2d(32, 6, (3, 3), stride=(2, 2), output_padding=(1, 1))
+        self.deconv5 = nn.ConvTranspose2d(32, 6, (3, 3), stride=(2, 2), output_padding=(1, 1))
         self.batch4 = nn.BatchNorm2d(32)
 
     def sampling(self, mu, std):
@@ -187,7 +187,7 @@ class StochasticDecoder(nn.Module):
         z = F.elu(self.deconv3(z))
         mu = self.deconv4(z)
         std = torch.ones_like(mu).detach()
-        o_rec = F.sigmoid(self.sampling(mu, std))
+        o_rec = self.sampling(mu, std)
         return mu, std, o_rec
 
     def forward(self, x):

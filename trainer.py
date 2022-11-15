@@ -2,14 +2,14 @@ import torch
 from losses import loss_loglikelihood, kl_divergence, contrastive_loss, mse_loss, temp_coherence, causality, \
                    proportionality, repeatability, bisimulation_loss, VAE_loss, loglikelihood_analitical_loss
 
-def train_AE(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_AE(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
 
     train_loss_ae = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
 
@@ -27,7 +27,7 @@ def train_AE(epoch, batch_size, nr_data, train_loader, model, optimizer):
 
     print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_ae / nr_data))
 
-def train_VAE(epoch, batch_size, nr_data, train_loader, model, optimizer, beta=1.0):
+def train_VAE(epoch, batch_size, nr_data, train_loader, model, optimizer, beta=0.5, distractor=False, fixed=True):
 
     model.train()
 
@@ -36,15 +36,14 @@ def train_VAE(epoch, batch_size, nr_data, train_loader, model, optimizer, beta=1
     train_loss_kl = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
 
         optimizer.zero_grad()
 
         _, mu_z, std_z, mu_o, std_o, o_rec = model(o)
 
-        loss_vae, loss_kl = VAE_loss(o_rec, o, mu_z, torch.log(torch.square(std_z)))
-
+        loss_vae, loss_kl = VAE_loss(o_rec, o, mu_z, torch.log(torch.square(std_z)), beta)
         loss_t = loss_vae + loss_kl
 
         loss_t.backward()
@@ -60,7 +59,8 @@ def train_VAE(epoch, batch_size, nr_data, train_loader, model, optimizer, beta=1
     print('====> Epoch: {} Average KL loss: {:.4f}'.format(epoch, train_loss_kl / nr_data))
 
 
-def train_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer, contrastive_learning='False'):
+def train_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer, contrastive_learning=False,
+                distractor=False, fixed=True):
     model.train()
 
     train_loss = 0
@@ -69,7 +69,7 @@ def train_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer, cont
         train_loss_hinge = 0
 
     for i in range(int(nr_data / batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a = torch.from_numpy(data['acts']).cuda()
@@ -110,7 +110,8 @@ def train_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer, cont
     else:
         print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
 
-def train_stochFW(epoch, batch_size, nr_data, train_loader, model, optimizer, contrastive_learning='False'):
+def train_stochFW(epoch, batch_size, nr_data, train_loader, model, optimizer, contrastive_learning=False,
+                  distractor=False, fixed=True):
 
     model.train()
 
@@ -120,7 +121,7 @@ def train_stochFW(epoch, batch_size, nr_data, train_loader, model, optimizer, co
         train_loss_hinge = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a = torch.from_numpy(data['acts']).cuda()
@@ -162,14 +163,14 @@ def train_stochFW(epoch, batch_size, nr_data, train_loader, model, optimizer, co
         print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
 
 
-def train_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
 
     train_loss_rw = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a = torch.from_numpy(data['acts']).cuda()
@@ -191,13 +192,13 @@ def train_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer):
     print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
 
 
-def train_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
     model.train()
 
     train_loss_in = 0
 
     for i in range(int(nr_data / batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a = torch.from_numpy(data['acts']).cuda()
@@ -218,7 +219,7 @@ def train_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer):
     print('====> Epoch: {} Average IN loss: {:.4f}'.format(epoch, train_loss_in / nr_data))
 
 
-def train_AE_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_AE_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
 
@@ -227,7 +228,7 @@ def train_AE_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer):
     train_loss_fw = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a = torch.from_numpy(data['acts']).cuda()
@@ -255,7 +256,7 @@ def train_AE_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer):
     print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_ae / nr_data))
     print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
 
-def train_AE_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_AE_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
 
@@ -264,7 +265,7 @@ def train_AE_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer):
     train_loss_rw = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a = torch.from_numpy(data['acts']).cuda()
@@ -293,7 +294,7 @@ def train_AE_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer):
     print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_ae / nr_data))
     print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
 
-def train_AE_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_AE_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
 
@@ -302,7 +303,7 @@ def train_AE_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer):
     train_loss_in = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a = torch.from_numpy(data['acts']).cuda()
@@ -330,7 +331,7 @@ def train_AE_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer):
     print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_ae / nr_data))
     print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_in / nr_data))
 
-def train_detFWRW(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_detFWRW(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
 
@@ -339,7 +340,7 @@ def train_detFWRW(epoch, batch_size, nr_data, train_loader, model, optimizer):
     train_loss_rw = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a = torch.from_numpy(data['acts']).cuda()
@@ -368,7 +369,7 @@ def train_detFWRW(epoch, batch_size, nr_data, train_loader, model, optimizer):
     print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
     print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
 
-def train_detFWRWIN(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_detFWRWIN(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
 
@@ -378,7 +379,7 @@ def train_detFWRWIN(epoch, batch_size, nr_data, train_loader, model, optimizer):
     train_loss_in = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a = torch.from_numpy(data['acts']).cuda()
@@ -411,14 +412,14 @@ def train_detFWRWIN(epoch, batch_size, nr_data, train_loader, model, optimizer):
     print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
     print('====> Epoch: {} Average IN loss: {:.4f}'.format(epoch, train_loss_in / nr_data))
 
-def train_encCL(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_encCL(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
 
     train_loss_hinge = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         o_neg = torch.from_numpy(data['obs3']).permute(0, 3, 1, 2).cuda()
@@ -437,7 +438,7 @@ def train_encCL(epoch, batch_size, nr_data, train_loader, model, optimizer):
 
     print('====> Epoch: {} Average hinge loss: {:.4f}'.format(epoch, train_loss_hinge / nr_data))
 
-def train_encPriors(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_encPriors(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
 
@@ -448,7 +449,7 @@ def train_encPriors(epoch, batch_size, nr_data, train_loader, model, optimizer):
     train_loss_rep = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o1 = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         o1_next = torch.from_numpy(data['obs2']).permute(0, 3, 1, 2).cuda()
@@ -484,7 +485,7 @@ def train_encPriors(epoch, batch_size, nr_data, train_loader, model, optimizer):
     print('====> Epoch: {} Average prop loss: {:.4f}'.format(epoch, train_loss_prop / nr_data))
     print('====> Epoch: {} Average rep loss: {:.4f}'.format(epoch, train_loss_rep / nr_data))
 
-def train_detMDPH(epoch, batch_size, nr_data, train_loader, model, optimizer):
+def train_detMDPH(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
 
@@ -494,7 +495,7 @@ def train_detMDPH(epoch, batch_size, nr_data, train_loader, model, optimizer):
     train_loss_hinge = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a = torch.from_numpy(data['acts']).cuda()
@@ -527,7 +528,8 @@ def train_detMDPH(epoch, batch_size, nr_data, train_loader, model, optimizer):
     print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
     print('====> Epoch: {} Average hinge loss: {:.4f}'.format(epoch, train_loss_hinge / nr_data))
 
-def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimizer, optimizer_fwrw):
+def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimizer, optimizer_fwrw, distractor=False,
+                       fixed=True):
 
     model.train()
 
@@ -537,7 +539,7 @@ def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimize
     train_loss_rw = 0
 
     for i in range(int(nr_data/batch_size)):
-        data = train_loader.sample_batch(batch_size)
+        data = train_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
 
         o1 = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
         a1 = torch.from_numpy(data['acts']).cuda()

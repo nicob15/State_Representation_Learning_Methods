@@ -5,6 +5,8 @@ from models import DeterministicLinearEncoder, DeterministicLinearDecoder, Deter
                    DeterministicRewardModel, DeterministicRewardModel_no_act, DeterministicInverseModel, \
                    DeterministicForwardModelMDPH, DeterministicActionEncoder
 
+import torch.nn.functional as F
+
 class LinearAE(nn.Module):
     def __init__(self, z_dim=20, h_dim=256):
         super(LinearAE, self).__init__()
@@ -34,11 +36,13 @@ class VAE(nn.Module):
         super(VAE, self).__init__()
 
         self.encoder = StochasticEncoder(z_dim=z_dim, h_dim=h_dim)
-        self.decoder = StochasticDecoder(z_dim=z_dim)
+        self.decoder = DeterministicDecoder(z_dim=z_dim)
 
     def forward(self, o):
         mu_z, std_z, z = self.encoder(o)
-        mu_o, std_o, o_rec = self.decoder(z)
+        o_rec = F.sigmoid(self.decoder(z))
+        mu_o = o_rec
+        std_o = None
         return z, mu_z, std_z, mu_o, std_o, o_rec
 
 class DeterministicFW(nn.Module):

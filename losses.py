@@ -68,5 +68,5 @@ def bisimulation_loss(z1, z2, r1, r2, mu1, std1, mu2, std2):
     return torch.mean(loss)
 
 def Wasserstein2(mu1, std1, mu2, std2, gamma=0.99):
-    loss = gamma * torch.sqrt((mu1 - mu2).pow(2) + (std1 - std2).pow(2)) #(torch.norm(mu1 - mu2, p=2, dim=1) + torch.norm(std1 - std2, p=2, dim=1))
+    loss = gamma * torch.sqrt((mu1 - mu2).pow(2) + (std1 - std2).pow(2))
     return loss
