@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--batch-size', type=int, default=50,
                     help='Batch size.')
-parser.add_argument('--num-epochs', type=int, default=100,
+parser.add_argument('--num-epochs', type=int, default=50,
                     help='Number of training epochs.')
 parser.add_argument('--learning-rate', type=float, default=3e-4,
                     help='Learning rate.')
@@ -34,7 +34,7 @@ parser.add_argument('--observation-dim-h', type=int, default=84,
                     help='Height of the input measurements (RGB images).')
 parser.add_argument('--observation-channels', type=int, default=6,
                     help='Channels of the RGB images (3*2 frames).')
-parser.add_argument('--latent-state-dim', type=int, default=20,
+parser.add_argument('--latent-state-dim', type=int, default=50,
                     help='Dimensionality of the latent state space.')
 parser.add_argument('--action-dim', type=int, default=1,
                     help='Dimensionality of the action space.')
@@ -410,9 +410,6 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
 if __name__ == "__main__":
 
     if method == 'all':
-        # Options are: linearAE, AE, VAE, detFW, detFW+CL stochFW, stochFW+CL, detRW, detIN, encCL, encPriors, detMDPH,
-        # encBisim, AEdetFW, AEdetRW, AEdetIN, detFWRW, detFWRWIN, encCL (explaination on github [ADD LINK])
-
         method = ['linearAE', 'AE', 'VAE', 'detFW', 'detFW+CL', 'stochFW', 'stochFW+CL', 'detRW', 'detIN', 'encPriors',
                   'detMDPH', 'encBisim', 'AEdetFW', 'AEdetRW', 'AEdetIN', 'detFWRW', 'detFWRWIN', 'encCL']
 

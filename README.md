@@ -49,7 +49,7 @@ We provide the training and testing dataset used to generate the results present
 
 ### Train the model
 ```bash
-python main.py 
+python main.py --method='all'
 ```
 
 ## Cite
