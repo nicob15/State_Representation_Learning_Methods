@@ -53,7 +53,7 @@ python main.py --method='all'
 ```
 
 ## Cite
-If you use this code in your own work, please cite our papers:
+If you use this code in your own work, please cite our paper:
 ```
 @article{botteghi2022unsupervised,
   title={Unsupervised Representation Learning in Deep Reinforcement Learning: A Review},
