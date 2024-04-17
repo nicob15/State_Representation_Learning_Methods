@@ -2,6 +2,48 @@ import torch
 from losses import loss_loglikelihood, kl_divergence, contrastive_loss, mse_loss, temp_coherence, causality, \
                    proportionality, repeatability, bisimulation_loss, VAE_loss, loglikelihood_analitical_loss
 
+def train_state_decoder(epoch, batch_size, nr_data, test_loader, state_decoder, model, optimizer, distractor=False, fixed=False):
+
+    state_decoder.train()
+    model.eval()
+
+    train_state_dec = 0
+
+    for i in range(int(nr_data/batch_size)):
+        data = test_loader.sample_batch(batch_size, distractor=distractor, fixed=fixed)
+
+        o = torch.from_numpy(data['obs1']).permute(0, 3, 1, 2).cuda()
+        s = torch.from_numpy(data['states']).cuda()
+        z = model.encoder(o).detach()
+
+        optimizer.zero_grad()
+
+        s_rec = state_decoder(z)
+
+        loss_state_dec = mse_loss(s_rec, s)
+
+        loss_state_dec.backward()
+
+        train_state_dec += loss_state_dec.item()
+
+        optimizer.step()
+
+    print('====> Epoch: {} Average state decoder loss: {:.10f}'.format(epoch, train_state_dec / nr_data))
+def test_state_decoder(nr_data, test_loader, state_decoder, model):
+
+    state_decoder.eval()
+    model.eval()
+
+    data = test_loader.get_all_samples()
+    o = torch.from_numpy(data['obs']).permute(0, 3, 1, 2).cuda()
+    s = torch.from_numpy(data['states']).cuda()
+    z = model.encoder(o).detach()
+    s_rec = state_decoder(z).detach()
+
+    test_error = mse_loss(s_rec, s)
+
+    return test_error.item()
+
 def train_AE(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
     model.train()
@@ -25,7 +67,9 @@ def train_AE(epoch, batch_size, nr_data, train_loader, model, optimizer, distrac
 
         optimizer.step()
 
-    print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_ae / nr_data))
+    print('====> Epoch: {} Average AE loss: {:.10f}'.format(epoch, train_loss_ae / nr_data))
+
+    return train_loss_ae / nr_data
 
 def train_VAE(epoch, batch_size, nr_data, train_loader, model, optimizer, beta=0.5, distractor=False, fixed=True):
 
@@ -54,10 +98,11 @@ def train_VAE(epoch, batch_size, nr_data, train_loader, model, optimizer, beta=0
 
         optimizer.step()
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-    print('====> Epoch: {} Average VAE loss: {:.4f}'.format(epoch, train_loss_vae / nr_data))
-    print('====> Epoch: {} Average KL loss: {:.4f}'.format(epoch, train_loss_kl / nr_data))
+    print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+    print('====> Epoch: {} Average VAE loss: {:.10f}'.format(epoch, train_loss_vae / nr_data))
+    print('====> Epoch: {} Average KL loss: {:.10f}'.format(epoch, train_loss_kl / nr_data))
 
+    return train_loss / nr_data
 
 def train_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer, contrastive_learning=False,
                 distractor=False, fixed=True):
@@ -104,11 +149,17 @@ def train_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer, cont
             optimizer.step()
 
     if contrastive_learning:
-        print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-        print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
-        print('====> Epoch: {} Average hinge loss: {:.4f}'.format(epoch, train_loss_hinge / nr_data))
+        print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+        print('====> Epoch: {} Average FW loss: {:.10f}'.format(epoch, train_loss_fw / nr_data))
+        print('====> Epoch: {} Average hinge loss: {:.10f}'.format(epoch, train_loss_hinge / nr_data))
+
+        return train_loss / nr_data
     else:
-        print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
+        print('====> Epoch: {} Average FW loss: {:.10f}'.format(epoch, train_loss_fw / nr_data))
+
+        return train_loss_fw / nr_data
+
+
 
 def train_stochFW(epoch, batch_size, nr_data, train_loader, model, optimizer, contrastive_learning=False,
                   distractor=False, fixed=True):
@@ -156,11 +207,15 @@ def train_stochFW(epoch, batch_size, nr_data, train_loader, model, optimizer, co
             optimizer.step()
 
     if contrastive_learning:
-        print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-        print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
-        print('====> Epoch: {} Average hinge loss: {:.4f}'.format(epoch, train_loss_hinge / nr_data))
+        print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+        print('====> Epoch: {} Average FW loss: {:.10f}'.format(epoch, train_loss_fw / nr_data))
+        print('====> Epoch: {} Average hinge loss: {:.10f}'.format(epoch, train_loss_hinge / nr_data))
+
+        return train_loss / nr_data
     else:
-        print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
+        print('====> Epoch: {} Average FW loss: {:.10f}'.format(epoch, train_loss_fw / nr_data))
+
+        return train_loss_fw / nr_data
 
 
 def train_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
@@ -189,7 +244,9 @@ def train_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer, dist
 
         optimizer.step()
 
-    print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
+    print('====> Epoch: {} Average RW loss: {:.10f}'.format(epoch, train_loss_rw / nr_data))
+
+    return train_loss_rw / nr_data
 
 
 def train_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
@@ -216,7 +273,9 @@ def train_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer, dist
 
         optimizer.step()
 
-    print('====> Epoch: {} Average IN loss: {:.4f}'.format(epoch, train_loss_in / nr_data))
+    print('====> Epoch: {} Average IN loss: {:.10f}'.format(epoch, train_loss_in / nr_data))
+
+    return train_loss_in / nr_data
 
 
 def train_AE_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
@@ -252,9 +311,11 @@ def train_AE_detFW(epoch, batch_size, nr_data, train_loader, model, optimizer, d
 
         optimizer.step()
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-    print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_ae / nr_data))
-    print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
+    print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+    print('====> Epoch: {} Average AE loss: {:.10f}'.format(epoch, train_loss_ae / nr_data))
+    print('====> Epoch: {} Average FW loss: {:.10f}'.format(epoch, train_loss_fw / nr_data))
+
+    return train_loss / nr_data
 
 def train_AE_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
@@ -290,9 +351,11 @@ def train_AE_detRW(epoch, batch_size, nr_data, train_loader, model, optimizer, d
 
         optimizer.step()
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-    print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_ae / nr_data))
-    print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
+    print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+    print('====> Epoch: {} Average AE loss: {:.10f}'.format(epoch, train_loss_ae / nr_data))
+    print('====> Epoch: {} Average RW loss: {:.10f}'.format(epoch, train_loss_rw / nr_data))
+
+    return train_loss / nr_data
 
 def train_AE_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
@@ -327,9 +390,11 @@ def train_AE_detIN(epoch, batch_size, nr_data, train_loader, model, optimizer, d
 
         optimizer.step()
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-    print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_ae / nr_data))
-    print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_in / nr_data))
+    print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+    print('====> Epoch: {} Average AE loss: {:.10f}'.format(epoch, train_loss_ae / nr_data))
+    print('====> Epoch: {} Average RW loss: {:.10f}'.format(epoch, train_loss_in / nr_data))
+
+    return train_loss / nr_data
 
 def train_detFWRW(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
@@ -365,9 +430,11 @@ def train_detFWRW(epoch, batch_size, nr_data, train_loader, model, optimizer, di
 
         optimizer.step()
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-    print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
-    print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
+    print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+    print('====> Epoch: {} Average AE loss: {:.10f}'.format(epoch, train_loss_fw / nr_data))
+    print('====> Epoch: {} Average RW loss: {:.10f}'.format(epoch, train_loss_rw / nr_data))
+
+    return train_loss / nr_data
 
 def train_detFWRWIN(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
@@ -407,10 +474,12 @@ def train_detFWRWIN(epoch, batch_size, nr_data, train_loader, model, optimizer, 
 
         optimizer.step()
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-    print('====> Epoch: {} Average AE loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
-    print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
-    print('====> Epoch: {} Average IN loss: {:.4f}'.format(epoch, train_loss_in / nr_data))
+    print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+    print('====> Epoch: {} Average AE loss: {:.10f}'.format(epoch, train_loss_fw / nr_data))
+    print('====> Epoch: {} Average RW loss: {:.10f}'.format(epoch, train_loss_rw / nr_data))
+    print('====> Epoch: {} Average IN loss: {:.10f}'.format(epoch, train_loss_in / nr_data))
+
+    return train_loss / nr_data
 
 def train_encCL(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
@@ -436,7 +505,9 @@ def train_encCL(epoch, batch_size, nr_data, train_loader, model, optimizer, dist
 
         optimizer.step()
 
-    print('====> Epoch: {} Average hinge loss: {:.4f}'.format(epoch, train_loss_hinge / nr_data))
+    print('====> Epoch: {} Average hinge loss: {:.10f}'.format(epoch, train_loss_hinge / nr_data))
+
+    return train_loss_hinge / nr_data
 
 def train_encPriors(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
@@ -479,11 +550,13 @@ def train_encPriors(epoch, batch_size, nr_data, train_loader, model, optimizer, 
 
         optimizer.step()
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-    print('====> Epoch: {} Average temp loss: {:.4f}'.format(epoch, train_loss_temp / nr_data))
-    print('====> Epoch: {} Average caus loss: {:.4f}'.format(epoch, train_loss_caus / nr_data))
-    print('====> Epoch: {} Average prop loss: {:.4f}'.format(epoch, train_loss_prop / nr_data))
-    print('====> Epoch: {} Average rep loss: {:.4f}'.format(epoch, train_loss_rep / nr_data))
+    print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+    print('====> Epoch: {} Average temp loss: {:.10f}'.format(epoch, train_loss_temp / nr_data))
+    print('====> Epoch: {} Average caus loss: {:.10f}'.format(epoch, train_loss_caus / nr_data))
+    print('====> Epoch: {} Average prop loss: {:.10f}'.format(epoch, train_loss_prop / nr_data))
+    print('====> Epoch: {} Average rep loss: {:.10f}'.format(epoch, train_loss_rep / nr_data))
+
+    return train_loss / nr_data
 
 def train_detMDPH(epoch, batch_size, nr_data, train_loader, model, optimizer, distractor=False, fixed=True):
 
@@ -523,10 +596,12 @@ def train_detMDPH(epoch, batch_size, nr_data, train_loader, model, optimizer, di
         optimizer.step()
 
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-    print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
-    print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
-    print('====> Epoch: {} Average hinge loss: {:.4f}'.format(epoch, train_loss_hinge / nr_data))
+    print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+    print('====> Epoch: {} Average FW loss: {:.10f}'.format(epoch, train_loss_fw / nr_data))
+    print('====> Epoch: {} Average RW loss: {:.10f}'.format(epoch, train_loss_rw / nr_data))
+    print('====> Epoch: {} Average hinge loss: {:.10f}'.format(epoch, train_loss_hinge / nr_data))
+
+    return train_loss / nr_data
 
 def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimizer, optimizer_fwrw, distractor=False,
                        fixed=True):
@@ -573,7 +648,9 @@ def train_EncDeepBisim(epoch, batch_size, nr_data, train_loader, model, optimize
         optimizer.step()
         optimizer_fwrw.step()
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / nr_data))
-    print('====> Epoch: {} Average bisimulation loss: {:.4f}'.format(epoch, train_loss_bis / nr_data))
-    print('====> Epoch: {} Average FW loss: {:.4f}'.format(epoch, train_loss_fw / nr_data))
-    print('====> Epoch: {} Average RW loss: {:.4f}'.format(epoch, train_loss_rw / nr_data))
+    print('====> Epoch: {} Average loss: {:.10f}'.format(epoch, train_loss / nr_data))
+    print('====> Epoch: {} Average bisimulation loss: {:.10f}'.format(epoch, train_loss_bis / nr_data))
+    print('====> Epoch: {} Average FW loss: {:.10f}'.format(epoch, train_loss_fw / nr_data))
+    print('====> Epoch: {} Average RW loss: {:.10f}'.format(epoch, train_loss_rw / nr_data))
+
+    return train_loss / nr_data

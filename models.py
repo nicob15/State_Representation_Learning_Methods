@@ -5,6 +5,33 @@ import torch.nn.functional as F
 # for 84x84 inputs
 OUT_DIM = {2: 39, 4: 35, 6: 31}
 
+class LinearStateDecoder(nn.Module):
+    def __init__(self, z_dim=50, h_dim=256, x_dim=3):
+        super(LinearStateDecoder, self).__init__()
+
+        self.fc = nn.Linear(z_dim, h_dim)
+        self.fc1 = nn.Linear(h_dim, h_dim)
+        self.fc2 = nn.Linear(h_dim, x_dim)
+
+    def forward(self, z):
+        z = self.fc(z)
+        z = self.fc1(z)
+        x = self.fc2(z)
+        return x
+class NonlinearStateDecoder(nn.Module):
+    def __init__(self, z_dim=50, h_dim=256, x_dim=3):
+        super(NonlinearStateDecoder, self).__init__()
+
+        self.fc = nn.Linear(z_dim, h_dim)
+        self.fc1 = nn.Linear(h_dim, h_dim)
+        self.fc2 = nn.Linear(h_dim, x_dim)
+
+    def forward(self, z):
+        z = F.elu(self.fc(z))
+        z = F.elu(self.fc1(z))
+        x = self.fc2(z)
+        return x
+
 class DeterministicLinearEncoder(nn.Module):
     def __init__(self, z_dim=20, h_dim=256):
         super(DeterministicLinearEncoder, self).__init__()
@@ -300,6 +327,21 @@ class DeterministicActionEncoder(nn.Module):
         za = F.elu(self.fc1(za))
         a_bar = self.fc2(za)
         return a_bar
+
+class DeterministicStateEncoder(nn.Module):
+    def __init__(self, z_dim=20, h_dim=256):
+        super(DeterministicStateEncoder, self).__init__()
+
+        self.fc = nn.Linear(z_dim, h_dim)
+        self.fc1 = nn.Linear(h_dim, h_dim)
+        self.fc2 = nn.Linear(h_dim, z_dim)
+
+    def forward(self, z):
+        z = F.elu(self.fc(z))
+        z = F.elu(self.fc1(z))
+        z_bar = self.fc2(z)
+        return z_bar
+
 
 
 class DeterministicForwardModelMDPH(nn.Module):

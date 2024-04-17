@@ -1,9 +1,9 @@
 import torch.nn as nn
 
-from models import DeterministicLinearEncoder, DeterministicLinearDecoder, DeterministicEncoder, DeterministicDecoder, \
-                   StochasticEncoder, StochasticDecoder, DeterministicForwardModel, StochasticForwardModel, \
-                   DeterministicRewardModel, DeterministicRewardModel_no_act, DeterministicInverseModel, \
-                   DeterministicForwardModelMDPH, DeterministicActionEncoder
+from models import (DeterministicLinearEncoder, DeterministicLinearDecoder, DeterministicEncoder, DeterministicDecoder,
+                    StochasticEncoder, DeterministicForwardModel, StochasticForwardModel, DeterministicRewardModel,
+                    DeterministicRewardModel_no_act, DeterministicInverseModel, DeterministicForwardModelMDPH,
+                    DeterministicActionEncoder)
 
 import torch.nn.functional as F
 

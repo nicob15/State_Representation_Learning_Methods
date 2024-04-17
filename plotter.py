@@ -7,6 +7,8 @@ from torchvision.utils import save_image
 import os
 from matplotlib.backends.backend_pdf import PdfPages
 from sklearn.preprocessing import Normalizer
+from models import NonlinearStateDecoder, LinearStateDecoder
+from trainer import train_state_decoder, test_state_decoder
 
 def compute_PCA(input, dim=2):
     pca = PCA(n_components=dim)
@@ -52,7 +54,8 @@ def plot_observation(obs, save_dir, nr_samples=24, obs_dim_1=84, obs_dim_2=84):
 
     save_image(tensor=obs.view(nr_samples, 3, obs_dim_1, obs_dim_2), fp=save_dir1 + '.png')
 
-def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, PCA=True, distractor=True, fixed=False):
+def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, PCA=True, distractor=True, fixed=False,
+                        latent_dim=50):
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -195,3 +198,42 @@ def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, P
     plt.savefig(save_dir + 'latent_states_2d_angles.png')
     plt.close()
 
+    with torch.set_grad_enabled(True):
+        linear_state_dec = LinearStateDecoder(z_dim=latent_dim)
+        if torch.cuda.is_available():
+            linear_state_dec = linear_state_dec.cuda()
+        optimizer_lin_dec = torch.optim.Adam([
+            {'params': linear_state_dec.parameters()},
+        ], lr=3e-4, weight_decay=0.0)
+        train_state_decoder(100, 50, 1000, test_loader, linear_state_dec, model,
+                            optimizer_lin_dec, distractor=distractor, fixed=fixed)
+        with torch.no_grad():
+            test_error_lin_dec = test_state_decoder(1000, test_loader, linear_state_dec, model)
+
+            with open(os.path.join(save_dir, 'test_error_linear_state_decoder.txt'), 'a') as file:
+                file.write("\n")
+                file.write("Error after 100 epochs of training:")
+                file.write(str(test_error_lin_dec))
+                file.write("\n")
+                file.write("\n")
+            file.close()
+
+    with torch.set_grad_enabled(True):
+        nonlinear_state_dec = NonlinearStateDecoder(z_dim=latent_dim)
+        if torch.cuda.is_available():
+            nonlinear_state_dec = nonlinear_state_dec.cuda()
+        optimizer_nonlin_dec = torch.optim.Adam([
+            {'params': nonlinear_state_dec.parameters()},
+        ], lr=3e-4, weight_decay=0.0)
+        train_state_decoder(100, 50, 1000, test_loader, nonlinear_state_dec, model,
+                            optimizer_nonlin_dec, distractor=distractor, fixed=fixed)
+        with torch.no_grad():
+            test_error_nonlin_dec = test_state_decoder(1000, test_loader, nonlinear_state_dec, model)
+
+            with open(os.path.join(save_dir, 'test_error_nonlinear_state_decoder.txt'), 'a') as file:
+                file.write("\n")
+                file.write("Error after 100 epochs of training:")
+                file.write(str(test_error_nonlin_dec))
+                file.write("\n")
+                file.write("\n")
+            file.close()

@@ -43,8 +43,8 @@ parser.add_argument('--state-dim', type=int, default=3,
 
 parser.add_argument('--measurement-noise-level', type=float, default=0.0,
                     help='Level of noise of the input measurements.')
-parser.add_argument('--distractor', action='store_true', default=False,
-                    help='Add visual distractor (black square) to the observations.')
+# parser.add_argument('--distractor', action='store_true', default=False,
+#                     help='Add visual distractor (black square) to the observations.')
 parser.add_argument('--no-fixed', action='store_false', default=True,
                     help='The position of the distractor is fixed in each observation, otherwise it is different in '
                          'each of them.')
@@ -52,7 +52,7 @@ parser.add_argument('--no-fixed', action='store_false', default=True,
 parser.add_argument('--hidden-dim', type=int, default=256,
                     help='Number of hidden units in MLPs.')
 
-parser.add_argument('--method', type=str, default='encBisim',
+parser.add_argument('--method', type=str, default='linearAE',
                     help='Model type.')
 parser.add_argument('--training-dataset', type=str, default='pendulum-train.pkl',
                     help='Training dataset.')
@@ -101,8 +101,11 @@ plotting = args.plotting
 log_interval = args.log_interval
 cuda = args.cuda
 
-distractor = args.distractor
-fixed_distractor = args.no_fixed
+# distractor = args.distractor
+# fixed_distractor = args.no_fixed
+
+distractor = False
+fixed_distractor = False
 
 
 def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
@@ -119,88 +122,88 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
     if method == 'linearAE':
         model = LinearAE(z_dim=latent_dim, h_dim=h_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'AE':
         model = AE(z_dim=latent_dim, h_dim=h_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'VAE':
         model = VAE(z_dim=latent_dim, h_dim=h_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'detFW':
         model = DeterministicFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'detFW+CL':
         model = DeterministicFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'stochFW':
         model = StochasticFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'stochFW+CL':
         model = StochasticFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'detRW':
         model = DeterministicRW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'detIN':
         model = DeterministicIN(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, bounded_act='True', scale=2.0)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'encPriors':
         model = EncPriors(z_dim=latent_dim, h_dim=h_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'detMDPH':
         model = DeterministicMDPH(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'encBisim':
         model = EncDeepBisimulation(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
-        optimizer_fwrw = torch.optim.Adam([
+        optimizer_fwrw = torch.optim.AdamW([
             {'params': model.fw_model.parameters(),
              'params': model.rw_model.parameters()},
         ], lr=lr, weight_decay=1e-3)
@@ -208,42 +211,42 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
     if method == 'AEdetFW':
         model = AE_DeterministicFW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'AEdetRW':
         model = AE_DeterministicRW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'AEdetIN':
         model = AE_DeterministicIN(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'detFWRW':
         model = DeterministicFWRW(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'detFWRWIN':
         model = DeterministicFWRWIN(z_dim=latent_dim, h_dim=h_dim, a_dim=act_dim, use_act='True')
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
     if method == 'encCL':
         model = EncoderCL(z_dim=latent_dim, h_dim=h_dim)
 
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.AdamW([
             {'params': model.parameters()},
         ], lr=lr, weight_decay=1e-3)
 
@@ -283,129 +286,151 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
     if not os.path.exists(save_pth_dir):
         os.makedirs(save_pth_dir)
 
+    best_loss = 1e6
     if training:
         for epoch in range(1, max_epoch):
 
             if method == 'linearAE':
-                train_AE(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader, model=model,
-                         optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_AE(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader, model=model,
+                                      optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'AE':
-                train_AE(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader, model=model,
-                         optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_AE(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader, model=model,
+                                      optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'VAE':
-                train_VAE(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader, model=model,
-                         optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_VAE(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader, model=model,
+                                       optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'detFW':
-                train_detFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader, model=model,
-                         optimizer=optimizer, contrastive_learning=False, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_detFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader, model=model,
+                                        optimizer=optimizer, contrastive_learning=False, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'detFW+CL':
-                train_detFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                            model=model, optimizer=optimizer, contrastive_learning=True, distractor=distractor,
-                            fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_detFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                         model=model, optimizer=optimizer, contrastive_learning=True, distractor=distractor,
+                                         fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'stochFW':
-                train_stochFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                              model=model, optimizer=optimizer, contrastive_learning=False, distractor=distractor,
-                              fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_stochFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                           model=model, optimizer=optimizer, contrastive_learning=False, distractor=distractor,
+                                           fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'stochFW+CL':
-                train_stochFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                              model=model, optimizer=optimizer, contrastive_learning=True, distractor=distractor,
-                              fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_stochFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                           model=model, optimizer=optimizer, contrastive_learning=True, distractor=distractor,
+                                           fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'detRW':
-                train_detRW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                            model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_detRW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                         model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'detIN':
-                train_detIN(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                            model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_detIN(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                         model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'encPriors':
-                train_encPriors(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                                model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_encPriors(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                             model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'detMDPH':
-                train_detMDPH(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                              model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_detMDPH(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                           model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'encBisim':
-                train_EncDeepBisim(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                                   model=model, optimizer=optimizer, optimizer_fwrw=optimizer_fwrw,
-                                   distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_EncDeepBisim(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                                model=model, optimizer=optimizer, optimizer_fwrw=optimizer_fwrw,
+                                                distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'AEdetFW':
-                train_AE_detFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                               model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_AE_detFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                            model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'AEdetRW':
-                train_AE_detRW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                               model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_AE_detRW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                            model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'AEdetIN':
-                train_AE_detIN(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                               model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_AE_detIN(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                            model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'detFWRW':
-                train_detFWRW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                              model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_detFWRW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                           model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'detFWRWIN':
-                train_detFWRWIN(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                                model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_detFWRWIN(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                             model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
             if method == 'encCL':
-                train_encCL(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                              model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
-                if epoch % log_interval == 0:
-                    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string + '.pth')
+                train_loss = train_encCL(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                         model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
 
-    torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string+'.pth')
+    #torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string+'.pth')
+    print("Best model found at epoch", epoch_best_model)
 
     if plotting:
         model.eval()
         with torch.no_grad():
+            model.load_state_dict(torch.load(save_pth_dir + 'best_model.pth'))
             plot_representation(model=model, method=method, nr_samples_plot=1000, test_loader=test_loader,
-                                save_dir=save_pth_dir, PCA=True, distractor=distractor, fixed=fixed_distractor)
+                            save_dir=save_pth_dir, PCA=True, distractor=distractor, fixed=fixed_distractor,
+                            latent_dim=latent_dim)
 
 if __name__ == "__main__":
 

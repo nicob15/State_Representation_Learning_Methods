@@ -120,8 +120,8 @@ class ReplayBuffer:
         return dict(obs=self.obs_buf[:self.size],
                     next_obs=self.next_obs_buf[:self.size],
                     acts=self.acts_buf[:self.size],
-                    done=self.done_buf[:self.size])
-
+                    done=self.done_buf[:self.size],
+                    states=self.state_buf[:self.size])
     def clear_memory(self):
         self.__init__(self.obs_dim, self.act_dim, self.max_size, self.state_dim)
 
