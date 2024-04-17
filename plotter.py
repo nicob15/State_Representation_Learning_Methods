@@ -202,11 +202,11 @@ def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, P
         linear_state_dec = LinearStateDecoder(z_dim=latent_dim)
         if torch.cuda.is_available():
             linear_state_dec = linear_state_dec.cuda()
-        optimizer_lin_dec = torch.optim.Adam([
+        optimizer_lin_dec = torch.optim.AdamW([
             {'params': linear_state_dec.parameters()},
-        ], lr=3e-4, weight_decay=0.0)
+        ], lr=3e-4, weight_decay=1e-3)
         train_state_decoder(100, 50, 1000, test_loader, linear_state_dec, model,
-                            optimizer_lin_dec, distractor=distractor, fixed=fixed)
+                            optimizer_lin_dec, distractor=distractor, fixed=fixed, method=method)
         with torch.no_grad():
             test_error_lin_dec = test_state_decoder(1000, test_loader, linear_state_dec, model)
 
@@ -222,13 +222,13 @@ def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, P
         nonlinear_state_dec = NonlinearStateDecoder(z_dim=latent_dim)
         if torch.cuda.is_available():
             nonlinear_state_dec = nonlinear_state_dec.cuda()
-        optimizer_nonlin_dec = torch.optim.Adam([
+        optimizer_nonlin_dec = torch.optim.AdamW([
             {'params': nonlinear_state_dec.parameters()},
-        ], lr=3e-4, weight_decay=0.0)
+        ], lr=3e-4, weight_decay=1e-3)
         train_state_decoder(100, 50, 1000, test_loader, nonlinear_state_dec, model,
-                            optimizer_nonlin_dec, distractor=distractor, fixed=fixed)
+                            optimizer_nonlin_dec, distractor=distractor, fixed=fixed, method=method)
         with torch.no_grad():
-            test_error_nonlin_dec = test_state_decoder(1000, test_loader, nonlinear_state_dec, model)
+            test_error_nonlin_dec = test_state_decoder(1000, test_loader, nonlinear_state_dec, model, method)
 
             with open(os.path.join(save_dir, 'test_error_nonlinear_state_decoder.txt'), 'a') as file:
                 file.write("\n")

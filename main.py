@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--batch-size', type=int, default=50,
                     help='Batch size.')
-parser.add_argument('--num-epochs', type=int, default=50,
+parser.add_argument('--num-epochs', type=int, default=250,
                     help='Number of training epochs.')
 parser.add_argument('--learning-rate', type=float, default=3e-4,
                     help='Learning rate.')
@@ -52,7 +52,7 @@ parser.add_argument('--no-fixed', action='store_false', default=True,
 parser.add_argument('--hidden-dim', type=int, default=256,
                     help='Number of hidden units in MLPs.')
 
-parser.add_argument('--method', type=str, default='linearAE',
+parser.add_argument('--method', type=str, default='all',
                     help='Model type.')
 parser.add_argument('--training-dataset', type=str, default='pendulum-train.pkl',
                     help='Training dataset.')
