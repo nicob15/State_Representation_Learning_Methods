@@ -54,9 +54,9 @@ parser.add_argument('--hidden-dim', type=int, default=256,
 
 parser.add_argument('--method', type=str, default='all',
                     help='Model type.')
-parser.add_argument('--training-dataset', type=str, default='pendulum-train.pkl',
+parser.add_argument('--training-dataset', type=str, default='pendulum-train-moving.pkl',
                     help='Training dataset.')
-parser.add_argument('--testing-dataset', type=str, default='pendulum-test.pkl',
+parser.add_argument('--testing-dataset', type=str, default='pendulum-test-moving.pkl',
                     help='Testing dataset.')
 
 parser.add_argument('--log-interval', type=int, default=10,
@@ -286,7 +286,7 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
     if not os.path.exists(save_pth_dir):
         os.makedirs(save_pth_dir)
 
-    best_loss = 1e6
+    best_loss = 1e12
     if training:
         for epoch in range(1, max_epoch):
 
@@ -370,14 +370,6 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
                     epoch_best_model = epoch
                     torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
-            if method == 'encBisim':
-                train_loss = train_EncDeepBisim(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
-                                                model=model, optimizer=optimizer, optimizer_fwrw=optimizer_fwrw,
-                                                distractor=distractor, fixed=fixed_distractor)
-                if train_loss < best_loss:
-                    epoch_best_model = epoch
-                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
-
             if method == 'AEdetFW':
                 train_loss = train_AE_detFW(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
                                             model=model, optimizer=optimizer, distractor=distractor, fixed=fixed_distractor)
@@ -420,6 +412,14 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
                     epoch_best_model = epoch
                     torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
 
+            if method == 'encBisim':
+                train_loss = train_EncDeepBisim(epoch=epoch, batch_size=batch_size, nr_data=nr_samples, train_loader=train_loader,
+                                                model=model, optimizer=optimizer, optimizer_fwrw=optimizer_fwrw,
+                                                distractor=distractor, fixed=fixed_distractor)
+                if train_loss < best_loss:
+                    epoch_best_model = epoch
+                    torch.save(model.state_dict(), save_pth_dir + '/best_model.pth')
+
 
     #torch.save(model.state_dict(), save_pth_dir + '/model_' + date_string+'.pth')
     print("Best model found at epoch", epoch_best_model)
@@ -435,8 +435,10 @@ def main(method='AE', noise_level=0.0, training_dataset='pendulum-train.pkl',
 if __name__ == "__main__":
 
     if method == 'all':
+        # method = ['detFW', 'detFW+CL', 'stochFW', 'stochFW+CL', 'detRW', 'detIN', 'encPriors',
+        #           'detMDPH', 'AEdetFW', 'AEdetRW', 'AEdetIN', 'detFWRW', 'detFWRWIN', 'encCL', 'encBisim']
         method = ['linearAE', 'AE', 'VAE', 'detFW', 'detFW+CL', 'stochFW', 'stochFW+CL', 'detRW', 'detIN', 'encPriors',
-                  'detMDPH', 'encBisim', 'AEdetFW', 'AEdetRW', 'AEdetIN', 'detFWRW', 'detFWRWIN', 'encCL']
+                  'detMDPH', 'AEdetFW', 'AEdetRW', 'AEdetIN', 'detFWRW', 'detFWRWIN', 'encCL', 'encBisim']
 
         for i in range(len(method)):
             main(method=method[i], noise_level=noise_level, training_dataset=training_dataset,

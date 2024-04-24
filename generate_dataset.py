@@ -18,15 +18,15 @@ parser.add_argument('--observation-dim-h', type=int, default=84,
                     help='Height of the input measurements (RGB images).')
 parser.add_argument('--test', default=True,
                     help='Generate training or testing dataset.')
-parser.add_argument('--training-dataset', type=str, default='pendulum-train.pkl',
+parser.add_argument('--training-dataset', type=str, default='pendulum-train-moving.pkl',
                     help='Training dataset.')
-parser.add_argument('--testing-dataset', type=str, default='pendulum-test.pkl',
+parser.add_argument('--testing-dataset', type=str, default='pendulum-test-moving.pkl',
                     help='Testing dataset.')
 parser.add_argument('--random-policy', default=True,
                     help='Use random action policy.')
 parser.add_argument('--render-mode', type=str, default='rgb_array',
                     help='Render mode (human or rgb_array)')
-parser.add_argument('--distractors', type=str, default='none',
+parser.add_argument('--distractors', type=str, default='moving',
                     help='Distractors type (none, fixed, moving)')
 
 args = parser.parse_args()

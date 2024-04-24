@@ -16,7 +16,7 @@ def train_state_decoder(epoch, batch_size, nr_data, test_loader, state_decoder, 
         s = torch.from_numpy(data['states']).cuda()
 
         if method == 'VAE':
-            z, _ = model.encoder(o)
+            _, _, z = model.encoder(o)
             z = z.detach()
         else:
             z = model.encoder(o).detach()
@@ -43,7 +43,7 @@ def test_state_decoder(nr_data, test_loader, state_decoder, model, method):
     o = torch.from_numpy(data['obs']).permute(0, 3, 1, 2).cuda()
     s = torch.from_numpy(data['states']).cuda()
     if method == 'VAE':
-        z, _ = model.encoder(o)
+        _, _, z = model.encoder(o)
         z = z.detach()
     else:
         z = model.encoder(o).detach()

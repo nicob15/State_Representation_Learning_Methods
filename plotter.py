@@ -208,7 +208,7 @@ def plot_representation(model, method, nr_samples_plot, test_loader, save_dir, P
         train_state_decoder(100, 50, 1000, test_loader, linear_state_dec, model,
                             optimizer_lin_dec, distractor=distractor, fixed=fixed, method=method)
         with torch.no_grad():
-            test_error_lin_dec = test_state_decoder(1000, test_loader, linear_state_dec, model)
+            test_error_lin_dec = test_state_decoder(1000, test_loader, linear_state_dec, model, method)
 
             with open(os.path.join(save_dir, 'test_error_linear_state_decoder.txt'), 'a') as file:
                 file.write("\n")
